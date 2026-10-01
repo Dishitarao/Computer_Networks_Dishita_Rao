@@ -1,0 +1,102 @@
+%%writefile server.py
+import socket
+
+def main():
+    # 1. Create TCP Socket
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    # 2. Bind and Listen
+    server_socket.bind(('127.0.0.1', 9999))
+    server_socket.listen(1)
+    print("[Server] Listening on port 9999...")
+
+    # 3. Accept Connection
+    client_socket, client_address = server_socket.accept()
+    print(f"[Server] Connected to client at {client_address}")
+
+    # Exchange Message 1
+    message1 = client_socket.recv(1024).decode('utf-8')
+    print(f"[Server] Received: {message1}")
+    
+    reply1 = "Hello Client, I received your message!"
+    client_socket.send(reply1.encode('utf-8'))
+
+    # Exchange Message 2
+    message2 = client_socket.recv(1024).decode('utf-8')
+    print(f"[Server] Received: {message2}")
+
+    reply2 = "bye"
+    client_socket.send(reply2.encode('utf-8'))
+
+    # Clean Close
+    client_socket.close()
+    server_socket.close()
+    print("[Server] Connection closed cleanly.")
+
+if __name__ == "__main__":
+    main()
+
+CLient:
+
+
+%%writefile client.py
+import socket
+import time
+
+def main():
+    # Brief delay to ensure server is ready
+    time.sleep(0.5)
+
+    # 1. Create TCP Socket
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # 2. Connect to Server
+    client_socket.connect(('127.0.0.1', 9999))
+    print("[Client] Connected to server!")
+
+    # Exchange Message 1
+    msg1 = "Hello Server!"
+    client_socket.send(msg1.encode('utf-8'))
+    print(f"[Client] Sent: {msg1}")
+
+    reply1 = client_socket.recv(1024).decode('utf-8')
+    print(f"[Client] Received: {reply1}")
+
+    # Exchange Message 2
+    msg2 = "bye"
+    client_socket.send(msg2.encode('utf-8'))
+    print(f"[Client] Sent: {msg2}")
+
+    reply2 = client_socket.recv(1024).decode('utf-8')
+    print(f"[Client] Received: {reply2}")
+
+    # Clean Close
+    client_socket.close()
+    print("[Client] Closed connection.")
+
+if __name__ == "__main__":
+    main()
+Console:
+
+
+import subprocess
+import time
+
+# 1. Start server process in background
+server_process = subprocess.Popen(["python3", "server.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+# 2. Give server 1 second to bind to port 8080 and listen
+time.sleep(1)
+
+# 3. Run client process
+client_process = subprocess.run(["python3", "client.py"], capture_output=True, text=True)
+
+# 4. Display Client Output
+print("=== CLIENT CONSOLE ===")
+print(client_process.stdout)
+
+# 5. Display Server Output
+server_stdout, _ = server_process.communicate()
+print("=== SERVER CONSOLE ===")
+print(server_stdout)
