@@ -1,0 +1,55 @@
+import socket
+import threading
+import time
+
+def run_udp_server():
+    # 1. Create UDP socket & bind to local address
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server_socket.bind(('127.0.0.1', 8080))
+    print("[SERVER] Listening on port 8080...")
+
+    # 2. Receive message from client
+    data, client_addr = server_socket.recvfrom(1024)
+    received_msg = data.decode('utf-8')
+    print(f"[SERVER] Received: '{received_msg}' from {client_addr}")
+
+    # 3. Convert string (Upper -> Lower)
+    processed_msg = received_msg.lower()
+
+    # 4. Send reply back to client
+    server_socket.sendto(processed_msg.encode('utf-8'), client_addr)
+    print(f"[SERVER] Sent reply: '{processed_msg}'")
+
+    # 5. Close socket
+    server_socket.close()
+
+def run_udp_client():
+    # 1. Create UDP socket
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+    # 2. Prepare message to send
+    message = "HELLO WORLD FROM GOOGLE COLAB!"
+    print(f"[CLIENT] Sending: '{message}'")
+
+    # 3. Send message to server IP and Port
+    client_socket.sendto(message.encode('utf-8'), ('127.0.0.1', 8080))
+
+    # 4. Receive reply from server
+    reply, _ = client_socket.recvfrom(1024)
+    print(f"[CLIENT] Received from server: '{reply.decode('utf-8')}'")
+
+    # 5. Close socket
+    client_socket.close()
+
+# Start Server in a background thread
+server_thread = threading.Thread(target=run_udp_server)
+server_thread.start()
+
+# Short delay to ensure server starts first
+time.sleep(0.5)
+
+# Run Client
+run_udp_client()
+
+# Wait for thread to finish
+server_thread.join()
