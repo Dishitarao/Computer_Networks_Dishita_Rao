@@ -1,0 +1,112 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const int INF = 9999;
+
+int main() {
+    int N;
+    cout << "Enter the number of routers: ";
+    cin >> N;
+
+    vector<vector<int>> cost(N, vector<int>(N));
+    vector<vector<int>> distance(N, vector<int>(N));
+    vector<vector<int>> nextHop(N, vector<int>(N));
+
+    cout << "Enter the network cost matrix (Use " << INF << " for no direct connection):\n";
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            cin >> cost[i][j];
+            distance[i][j] = cost[i][j];
+            if (i == j) {
+                distance[i][j] = 0;
+                nextHop[i][j] = i;
+            } else if (cost[i][j] != INF) {
+                nextHop[i][j] = j;
+            } else {
+                nextHop[i][j] = -1;
+            }
+        }
+    }
+
+    // Initial Output
+    cout << "\n--- Initial Cost Matrix ---\n";
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            if (cost[i][j] == INF) cout << "INF\t";
+            else cout << cost[i][j] << "\t";
+        }
+        cout << endl;
+    }
+
+    cout << "\n--- Initial Routing Tables ---\n";
+    for (int i = 0; i < N; i++) {
+        cout << "Routing Table for Router " << i << ":\n";
+        cout << "Dest\tCost\tNextHop\n";
+        for (int j = 0; j < N; j++) {
+            cout << j << "\t" << (distance[i][j] == INF ? -1 : distance[i][j]) << "\t" << nextHop[i][j] << "\n";
+        }
+        cout << endl;
+    }
+
+    // Distance Vector Updates (Bellman-Ford)
+    bool updated;
+    do {
+        updated = false;
+        for (int source = 0; source < N; source++) {
+            for (int destination = 0; destination < N; destination++) {
+                for (int neighbour = 0; neighbour < N; neighbour++) {
+                    if (cost[source][neighbour] != INF && distance[neighbour][destination] != INF) {
+                        int newCost = cost[source][neighbour] + distance[neighbour][destination];
+                        if (newCost < distance[source][destination]) {
+                            distance[source][destination] = newCost;
+                            nextHop[source][destination] = neighbour;
+                            updated = true;
+                        }
+                    }
+                }
+            }
+        }
+    } while (updated);
+
+    // Final Routing Tables Output
+    cout << "\n--- Final Routing Tables ---\n";
+    for (int source = 0; source < N; source++) {
+        cout << "Routing Table for Router " << source << ":\n";
+        cout << "Dest\tCost\tNextHop\n";
+        for (int destination = 0; destination < N; destination++) {
+            cout << destination << "\t" 
+                 << (distance[source][destination] == INF ? -1 : distance[source][destination]) 
+                 << "\t" << nextHop[source][destination] << "\n";
+        }
+        cout << endl;
+    }
+
+    // Path Querying
+    int selectedSource, selectedDestination;
+    cout << "Enter selected Source Router: ";
+    cin >> selectedSource;
+    cout << "Enter selected Destination Router: ";
+    cin >> selectedDestination;
+
+    if (distance[selectedSource][selectedDestination] == INF) {
+        cout << "No path exists between the selected routers\n";
+    } else {
+        cout << "Minimum Cost: " << distance[selectedSource][selectedDestination] << "\n";
+        cout << "Shortest Path:\n";
+        int current = selectedSource;
+        cout << current;
+        while (current != selectedDestination) {
+            current = nextHop[current][selectedDestination];
+            if (current == -1) {
+                cout << "\nPath cannot be determined";
+                break;
+            }
+            cout << " -> " << current;
+        }
+        cout << endl;
+    }
+
+    return 0;
+}
